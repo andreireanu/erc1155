@@ -4,7 +4,7 @@ PROXY=https://devnet-gateway.multiversx.com
 CHAIN_ID="D"
 WALLET_ALICE="${PWD}/erc1155/wallets/alice.pem"
 WALLET_BOB="${PWD}/erc1155/wallets/bob.pem"
-CONTRACT_ADDRESS="erd1qqqqqqqqqqqqqpgqjm3evc29g25hg8t73ath26njrwem2lsp7wpqf9svy7"
+CONTRACT_ADDRESS="erd1qqqqqqqqqqqqqpgqxthrrxum9vvtw46ncjatgunsntc3kpkf7wpq8a8f8t"
 ALICE_ADDRESS="erd1aqd2v3hsrpgpcscls6a6al35uc3vqjjmskj6vnvl0k93e73x7wpqtpctqw"
 ALICE_ADDRESS_HEX="$(mxpy wallet bech32 --decode ${ALICE_ADDRESS})"
 ALICE_ADDRESS_HEXX="0x$(mxpy wallet bech32 --decode ${ALICE_ADDRESS})"
@@ -74,14 +74,6 @@ setLocalRoles() {
     --arguments "str:"$ALICE_ADDRESS  
 }
 
-getCreatorToken() {
-    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
-    --proxy=${PROXY} \
-    --function="getCreatorToken" \
-    --arguments ${ALICE_ADDRESS_HEXX}
-    }  
-
-
 ### GETS
 
 ID=1
@@ -115,7 +107,7 @@ getBalance() {
  
 ### DEV CALLS (HANDLE WITH CARE)
  
-clear() {
+initTokenCount() {
     mxpy --verbose contract call ${CONTRACT_ADDRESS} \
     --send \
     --proxy=${PROXY} \
@@ -123,7 +115,7 @@ clear() {
     --recall-nonce \
     --pem="erc1155/wallets/alice.pem" \
     --gas-limit=3000000 \
-    --function="clear"
+    --function="initTokenCount"
 }
 
 EXISTING_TOKEN=ERC3-26897c

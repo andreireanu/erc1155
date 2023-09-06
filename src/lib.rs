@@ -8,7 +8,9 @@ mod storage;
 #[multiversx_sc::contract]
 pub trait Erc1155Contract: crate::storage::StorageModule {
     #[init]
-    fn init(&self) {}
+    fn init(&self) {
+        self.token_count().set(1usize);
+    }
 
     ////////////////
     // Issue fungible token
@@ -94,8 +96,8 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
 
     // DEV ONLY
     // Clear token count if needed
-    #[endpoint(clear)]
-    fn clear(&self) {
+    #[endpoint(initTokenCount)]
+    fn init_token_count(&self) {
         self.token_count().set(1usize);
     }
 

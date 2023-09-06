@@ -24,7 +24,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         issueFungibleToken => issue_fungible_token
         setLocalRoles => set_local_roles
-        clear => clear
+        initTokenCount => init_token_count
         addToStorage => add_to_storage
         getAddress => address
         getBalance => balance
