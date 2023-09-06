@@ -4,7 +4,7 @@ PROXY=https://devnet-gateway.multiversx.com
 CHAIN_ID="D"
 WALLET_ALICE="${PWD}/erc1155/wallets/alice.pem"
 WALLET_BOB="${PWD}/erc1155/wallets/bob.pem"
-CONTRACT_ADDRESS="erd1qqqqqqqqqqqqqpgqs2n04pqtgnexfrwyh76lgjseqvf2qava7wpq96sfp8"
+CONTRACT_ADDRESS="erd1qqqqqqqqqqqqqpgq6j92kyrhgmxfqphwndq60p0p4a9neskw7wpqk7vz7t"
 ALICE_ADDRESS="erd1aqd2v3hsrpgpcscls6a6al35uc3vqjjmskj6vnvl0k93e73x7wpqtpctqw"
 ALICE_ADDRESS_HEX="$(mxpy wallet bech32 --decode ${ALICE_ADDRESS})"
 ALICE_ADDRESS_HEXX="0x$(mxpy wallet bech32 --decode ${ALICE_ADDRESS})"
@@ -14,6 +14,8 @@ BOB_ADDRESS_HEXX="0x$(mxpy wallet bech32 --decode ${BOB_ADDRESS})"
 MARTA_ADDRESS="erd1uycnjd0epww6xrmn0xjdkfhjengpaf4l5866rlrd8qpcsamrqr8qs6ucxx"
 MARTA_ADDRESS_HEX="$(mxpy wallet bech32 --decode ${MARTA_ADDRESS})"
 MARTA_ADDRESS_HEXX="0x$(mxpy wallet bech32 --decode ${MARTA_ADDRESS})"
+
+### MAIN
 
 deploy() {
  mxpy contract deploy --proxy=${PROXY} \
@@ -39,8 +41,12 @@ upgrade() {
 }
 
 
-TKN_NAME="ERCFungible1"
-TKN_TICKER="ERC1"
+
+### ISSUE, MINT, ROLES
+
+TKN_NAME="CallbackToken1"
+TKN_TICKER="CBT1"
+AMOUNT=100
 
 issueFungibleToken() {
     mxpy --verbose contract call ${CONTRACT_ADDRESS} \
@@ -52,32 +58,9 @@ issueFungibleToken() {
     --pem="erc1155/wallets/alice.pem" \
     --gas-limit=140000000 \
     --function="issueFungibleToken" \
-    --arguments "str:"$TKN_NAME "str:"$TKN_TICKER  
-}
-
-ID=0
-
-getBalances() {
-    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
-    --chain=${CHAIN_ID} \
-    --proxy=${PROXY} \
-    --function="getBalances"  
-    --arguments $ID  
-    }
-
-getBalanceById() {
-    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
-    --chain=${CHAIN_ID} \
-    --proxy=${PROXY} \
-    --function="getBalanceById" 
-    --arguments $ID  
-    }
+    --arguments "str:"$TKN_NAME "str:"$TKN_TICKER $AMOUNT
+} 
  
-tokenCount() {
-    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
-    --proxy=${PROXY} \
-    --function="tokenCount"  
-    } 
 
 setLocalRoles() {
     mxpy --verbose contract call ${CONTRACT_ADDRESS} \
@@ -88,18 +71,74 @@ setLocalRoles() {
     --pem="erc1155/wallets/alice.pem" \
     --gas-limit=140000000 \
     --function="setLocalRoles"
-    --arguments "str:"$TKN_NAME   
+    --arguments "str:"$ALICE_ADDRESS  
 }
 
+getCreatorToken() {
+    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
+    --proxy=${PROXY} \
+    --function="getCreatorToken" \
+    --arguments ${ALICE_ADDRESS_HEXX}
+    }  
+
+
+### GETS
+
+ID=2
+
+getTokenCount() {
+    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
+    --proxy=${PROXY} \
+    --function="getTokenCount"  
+}
+
+getAddress() {
+    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
+    --proxy=${PROXY} \
+    --function="getAddress" \
+    --arguments $ID
+}
+
+getTokenName() {
+    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
+    --proxy=${PROXY} \
+    --function="getTokenName" \
+    --arguments $ID
+}
+
+getBalance() {
+    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
+    --proxy=${PROXY} \
+    --function="getBalance" \
+    --arguments ${ALICE_ADDRESS_HEXX} 
+}
  
+### DEV CALLS (HANDLE WITH CARE)
+ 
+initTokenCount() {
+    mxpy --verbose contract call ${CONTRACT_ADDRESS} \
+    --send \
+    --proxy=${PROXY} \
+    --chain=${CHAIN_ID} \
+    --recall-nonce \
+    --pem="erc1155/wallets/alice.pem" \
+    --gas-limit=3000000 \
+    --function="initTokenCount"
+}
 
+EXISTING_TOKEN=ERC3-26897c
 
-
-
-
-
-
-
+addToStorage() {
+    mxpy --verbose contract call ${CONTRACT_ADDRESS} \
+    --send \
+    --proxy=${PROXY} \
+    --chain=${CHAIN_ID} \
+    --recall-nonce \
+    --pem="erc1155/wallets/alice.pem" \
+    --gas-limit=140000000 \
+    --function="addToStorage" \
+    --arguments "str:"$EXISTING_TOKEN  
+}
 
 
 

@@ -2,17 +2,13 @@
 
 multiversx_sc::imports!();
 
-mod formats;
 mod storage;
-use formats::Balances;
 
 /// An empty contract. To be used as a template when starting a new contract from scratch.
 #[multiversx_sc::contract]
 pub trait Erc1155Contract: crate::storage::StorageModule {
     #[init]
-    fn init(&self) {
-        self.token_count().set(1usize);
-    }
+    fn init(&self) {}
 
     ////////////////
     // Issue fungible token
@@ -22,6 +18,7 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         &self,
         token_display_name: &ManagedBuffer,
         token_ticker: &ManagedBuffer,
+        initial_supply: &BigUint,
     ) {
         let issue_cost = self.call_value().egld_value().clone_value();
         let caller = self.blockchain().get_caller();
@@ -32,7 +29,7 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
                 issue_cost,
                 &token_display_name,
                 &token_ticker,
-                &BigUint::from(0u64),
+                &initial_supply,
                 FungibleTokenProperties {
                     num_decimals: 0,
                     can_freeze: true,
@@ -59,15 +56,8 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         let (token_identifier, returned_tokens) = self.call_value().egld_or_single_fungible_esdt();
         match result {
             ManagedAsyncCallResult::Ok(()) => {
-                self.token_count().update(|id| {
-                    self.balances(*id).set({
-                        Balances {
-                            owner: caller.clone(),
-                            amount: BigUint::from(0u64),
-                        }
-                    });
-                    *id += 1;
-                });
+                self.creator_token(caller)
+                    .set(token_identifier.unwrap_esdt());
             }
             ManagedAsyncCallResult::Err(_message) => {
                 // return issue cost to the caller
@@ -76,7 +66,7 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
                 }
             }
         }
-    }
+    } 
 
     ////////////////
     // Set minting roles for sc address
@@ -93,5 +83,29 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
             .set_special_roles(&sc_address, token_identifier, roles[..].iter().cloned())
             .async_call()
             .call_and_exit()
+    }
+
+    ////////////////
+    // EXTRA
+
+    // DEV ONLY
+    // Init token count if needed
+    #[endpoint(initTokenCount)]
+    fn init_token_count(&self) {
+        self.token_count().set(1usize);
+    }
+
+    // DEV ONLY
+    // Manually add to storage with token, id
+    #[endpoint(addToStorage)]
+    fn add_to_storage(&self, token: TokenIdentifier) {
+        let caller = self.blockchain().get_caller();
+        self.token_count().update(|id| {
+            self.address(*id).insert(caller.clone());
+            self.balance(caller.clone())
+                .insert(*id, BigUint::from(100u64));
+            self.token_name(*id).set(token);
+            *id += 1;
+        });
     }
 }
