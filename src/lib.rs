@@ -2,14 +2,16 @@
 
 multiversx_sc::imports!();
 
+mod formats;
 mod storage;
+use formats::Balances;
 
 /// An empty contract. To be used as a template when starting a new contract from scratch.
 #[multiversx_sc::contract]
 pub trait Erc1155Contract: crate::storage::StorageModule {
     #[init]
     fn init(&self) {
-        self.token_count().set(0);
+        self.token_count().set(1usize);
     }
 
     ////////////////
@@ -20,7 +22,6 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         &self,
         token_display_name: &ManagedBuffer,
         token_ticker: &ManagedBuffer,
-        initial_supply: &BigUint,
     ) {
         let issue_cost = self.call_value().egld_value().clone_value();
         let caller = self.blockchain().get_caller();
@@ -31,7 +32,7 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
                 issue_cost,
                 &token_display_name,
                 &token_ticker,
-                &initial_supply,
+                &BigUint::from(0u64),
                 FungibleTokenProperties {
                     num_decimals: 0,
                     can_freeze: true,
@@ -58,8 +59,15 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         let (token_identifier, returned_tokens) = self.call_value().egld_or_single_fungible_esdt();
         match result {
             ManagedAsyncCallResult::Ok(()) => {
-                // self.creator_token(caller)
-                //     .set(token_identifier.unwrap_esdt());
+                self.token_count().update(|id| {
+                    self.balances(*id).set({
+                        Balances {
+                            owner: caller.clone(),
+                            amount: BigUint::from(0u64),
+                        }
+                    });
+                    *id += 1;
+                });
             }
             ManagedAsyncCallResult::Err(_message) => {
                 // return issue cost to the caller
@@ -72,7 +80,7 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
 
     ////////////////
     // Set minting roles for sc address
-    #[inline]
+    #[endpoint(setLocalRoles)]
     fn set_local_roles(&self, token_identifier: &TokenIdentifier) {
         let sc_address = self.blockchain().get_sc_address();
         let roles = [
