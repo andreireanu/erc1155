@@ -22,7 +22,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     erc1155
     (
         init => init
-        issueFungibleToken => issue_fungible_token
+        mintFungibleToken => mint_fungible_token
         setLocalRoles => set_local_roles
         initTokenCount => init_token_count
         addToStorage => add_to_storage

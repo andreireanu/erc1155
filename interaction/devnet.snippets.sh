@@ -4,7 +4,7 @@ PROXY=https://devnet-gateway.multiversx.com
 CHAIN_ID="D"
 WALLET_ALICE="${PWD}/erc1155/wallets/alice.pem"
 WALLET_BOB="${PWD}/erc1155/wallets/bob.pem"
-CONTRACT_ADDRESS="erd1qqqqqqqqqqqqqpgqxthrrxum9vvtw46ncjatgunsntc3kpkf7wpq8a8f8t"
+CONTRACT_ADDRESS="erd1qqqqqqqqqqqqqpgq0z9jwg83t9v0uw6hjez33q85fyfapdjf7wpqcequja"
 ALICE_ADDRESS="erd1aqd2v3hsrpgpcscls6a6al35uc3vqjjmskj6vnvl0k93e73x7wpqtpctqw"
 ALICE_ADDRESS_HEX="$(mxpy wallet bech32 --decode ${ALICE_ADDRESS})"
 ALICE_ADDRESS_HEXX="0x$(mxpy wallet bech32 --decode ${ALICE_ADDRESS})"
@@ -44,11 +44,11 @@ upgrade() {
 
 ### ISSUE, MINT, ROLES
 
-TKN_NAME="CallbackToken"
-TKN_TICKER="CBT"
-AMOUNT=100
+TKN_NAME="CallbackToken1"
+TKN_TICKER="CBT1"
+AMOUNT=10
 
-issueFungibleToken() {
+mintFungibleToken() {
     mxpy --verbose contract call ${CONTRACT_ADDRESS} \
     --send \
     --value=50000000000000000 \
@@ -57,7 +57,7 @@ issueFungibleToken() {
     --recall-nonce \
     --pem="erc1155/wallets/alice.pem" \
     --gas-limit=140000000 \
-    --function="issueFungibleToken" \
+    --function="mintFungibleToken" \
     --arguments "str:"$TKN_NAME "str:"$TKN_TICKER $AMOUNT
 } 
  
@@ -76,7 +76,7 @@ setLocalRoles() {
 
 ### GETS
 
-ID=1
+ID=4
 
 getTokenCount() {
     mxpy --verbose contract query ${CONTRACT_ADDRESS} \

@@ -9,14 +9,13 @@ mod storage;
 pub trait Erc1155Contract: crate::storage::StorageModule {
     #[init]
     fn init(&self) {
-        self.token_count().set(1usize);
     }
 
     ////////////////
     // Issue fungible token
     #[payable("EGLD")]
-    #[endpoint(issueFungibleToken)]
-    fn issue_fungible_token(
+    #[endpoint(mintFungibleToken)]
+    fn mint_fungible_token(
         &self,
         token_display_name: &ManagedBuffer,
         token_ticker: &ManagedBuffer,
@@ -45,26 +44,28 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
                 },
             )
             .async_call()
-            .with_callback(self.callbacks().issue_fungible_callback(&caller))
+            .with_callback(self.callbacks().mint_fungible_callback(&caller, &initial_supply))
             .call_and_exit()
     }
 
     #[callback]
-    fn issue_fungible_callback(
+    fn mint_fungible_callback(
         &self,
         caller: &ManagedAddress,
+        initial_supply: &BigUint,
         #[call_result] result: ManagedAsyncCallResult<()>,
     ) {
         let (token_identifier, returned_tokens) = self.call_value().egld_or_single_fungible_esdt();
         match result {
             ManagedAsyncCallResult::Ok(()) => {
-                // self.creator_token(caller)
-                //     .set(token_identifier.unwrap_esdt());
-                // ?? Moving all logic in the token_count update doesn't work for some reason
-                let id = self.token_count().get();
-                self.address(id).insert(caller.clone());
-                self.token_count().update(|id| *id += 1);
-            }
+                self.token_count().update(|id| {
+                    self.address(*id).insert(caller.clone());
+                    self.balance(caller.clone())
+                        .insert(*id, initial_supply.clone());
+                    self.token_name(*id).set(token_identifier.unwrap_esdt());
+                    *id += 1;
+                })
+             },
             ManagedAsyncCallResult::Err(_message) => {
                 // return issue cost to the caller
                 if token_identifier.is_egld() && returned_tokens > 0 {
