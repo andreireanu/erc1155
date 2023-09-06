@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                            9
+// Endpoints:                            8
 // Async Callback:                       1
-// Total number of exported functions:  11
+// Total number of exported functions:  10
 
 #![no_std]
 
@@ -24,13 +24,12 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         issueFungibleToken => issue_fungible_token
         setLocalRoles => set_local_roles
-        initTokenCount => init_token_count
+        clear => clear
         addToStorage => add_to_storage
         getAddress => address
         getBalance => balance
         getTokenName => token_name
         getTokenCount => token_count
-        getCreatorToken => creator_token
     )
 }
 

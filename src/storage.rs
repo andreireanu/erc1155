@@ -21,8 +21,4 @@ pub trait StorageModule {
     #[view(getTokenCount)]
     #[storage_mapper("token_count")]
     fn token_count(&self) -> SingleValueMapper<usize>;
-
-    #[view(getCreatorToken)]
-    #[storage_mapper("creatorToken")]
-    fn creator_token(&self, user: &ManagedAddress) -> SingleValueMapper<TokenIdentifier>;
 }

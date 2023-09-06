@@ -56,8 +56,12 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         let (token_identifier, returned_tokens) = self.call_value().egld_or_single_fungible_esdt();
         match result {
             ManagedAsyncCallResult::Ok(()) => {
-                self.creator_token(caller)
-                    .set(token_identifier.unwrap_esdt());
+                // self.creator_token(caller)
+                //     .set(token_identifier.unwrap_esdt());
+                // ?? Moving all logic in the token_count update doesn't work for some reason
+                let id = self.token_count().get();
+                self.address(id).insert(caller.clone());
+                self.token_count().update(|id| *id += 1);
             }
             ManagedAsyncCallResult::Err(_message) => {
                 // return issue cost to the caller
@@ -66,7 +70,7 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
                 }
             }
         }
-    } 
+    }
 
     ////////////////
     // Set minting roles for sc address
@@ -86,12 +90,12 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
     }
 
     ////////////////
-    // EXTRA
+    // WARNING: DANGER ZONE!
 
     // DEV ONLY
-    // Init token count if needed
-    #[endpoint(initTokenCount)]
-    fn init_token_count(&self) {
+    // Clear token count if needed
+    #[endpoint(clear)]
+    fn clear(&self) {
         self.token_count().set(1usize);
     }
 
