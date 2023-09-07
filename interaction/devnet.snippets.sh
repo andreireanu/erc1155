@@ -96,18 +96,6 @@ NFT_NAME="THORHAMMER"
 URI="https://ipfs.io/ipfs/QmTSzERByLKRLA2YGK5sAuFGmNktYkrKcXRr7SsrsqzQG7"
 ATTR="Hammer:Best"
 
-setLocalRoles() {
-    mxpy --verbose contract call ${CONTRACT_ADDRESS} \
-    --send \
-    --proxy=${PROXY} \
-    --chain=${CHAIN_ID} \
-    --recall-nonce \
-    --pem="erc1155/wallets/alice.pem" \
-    --gas-limit=140000000 \
-    --function="setLocalRoles" \
-    --arguments "str:"$NFT_ISSUE_NAME  
-}
-
 createNft() {
     mxpy --verbose contract call ${CONTRACT_ADDRESS} \
     --send \
@@ -153,6 +141,14 @@ getBalance() {
     --arguments ${ALICE_ADDRESS_HEXX} 
 }
  
+getCurrentIssuedNft() {
+    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
+    --proxy=${PROXY} \
+    --function="getCurrentIssuedNft"
+}
+
+
+
 ### DEV CALLS (HANDLE WITH CARE)
  
 initTokenCount() {

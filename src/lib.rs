@@ -149,7 +149,6 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         let sc_address = self.blockchain().get_sc_address();
         let roles = [
             EsdtLocalRole::NftCreate,
-            EsdtLocalRole::NftAddQuantity,
             EsdtLocalRole::NftBurn,
         ];
         self.send()
