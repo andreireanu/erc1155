@@ -44,9 +44,9 @@ upgrade() {
 
 ### ISSUE, MINT, ROLES
 
-TKN_NAME="GOLD"
-TKN_TICKER="GOLD"
-AMOUNT=1000
+TKN_NAME="SILVER"
+TKN_TICKER="SLVR"
+AMOUNT=2000
 
 mintFungibleToken() {
     mxpy --verbose contract call ${CONTRACT_ADDRESS} \
@@ -61,8 +61,8 @@ mintFungibleToken() {
     --arguments "str:"$TKN_NAME "str:"$TKN_TICKER $AMOUNT
 } 
 
-NFT_NAME="THORHAMMER"
-NFT_TICKER="THM"
+NFT_NAME="ATHENASWORD"
+NFT_TICKER="SWD"
  
 issueNonFungibleToken() {
     mxpy --verbose contract call ${CONTRACT_ADDRESS} \
@@ -77,26 +77,8 @@ issueNonFungibleToken() {
     --arguments "str:"$NFT_NAME "str:"$NFT_TICKER
 }
 
-NFT_ISSUE_NAME=THM-b30377
 
-setLocalRoles() {
-    mxpy --verbose contract call ${CONTRACT_ADDRESS} \
-    --send \
-    --proxy=${PROXY} \
-    --chain=${CHAIN_ID} \
-    --recall-nonce \
-    --pem="erc1155/wallets/alice.pem" \
-    --gas-limit=140000000 \
-    --function="setLocalRoles" \
-    --arguments "str:"$NFT_ISSUE_NAME  
-}
-
-NFT_ID=2
-NFT_NAME="THORHAMMER"
-URI="https://ipfs.io/ipfs/QmTSzERByLKRLA2YGK5sAuFGmNktYkrKcXRr7SsrsqzQG7"
-ATTR="Hammer:Best"
-
-createNft() {
+mintNft() {
     mxpy --verbose contract call ${CONTRACT_ADDRESS} \
     --send \
     --proxy=${PROXY} \
@@ -104,15 +86,14 @@ createNft() {
     --recall-nonce \
     --pem="erc1155/wallets/alice.pem" \
     --gas-limit=5500000 \
-    --function="createNft" \
-    --arguments "str:"$NFT_ID "str:"$NFT_NAME "str:"$URI "str:"$ATTR 
+    --function="mintNft"
 } 
  
  
 
 ### GETS
 
-ID=1
+ID=4
 
 getTokenCount() {
     mxpy --verbose contract query ${CONTRACT_ADDRESS} \
@@ -148,7 +129,6 @@ getCurrentIssuedNft() {
 }
 
 
-
 ### DEV CALLS (HANDLE WITH CARE)
  
 initTokenCount() {
@@ -176,7 +156,19 @@ addToStorage() {
     --arguments "str:"$EXISTING_TOKEN  
 }
 
-
+NFT_ISSUE_NAME=THM-b30377
+ 
+setLocalRoles() {
+    mxpy --verbose contract call ${CONTRACT_ADDRESS} \
+    --send \
+    --proxy=${PROXY} \
+    --chain=${CHAIN_ID} \
+    --recall-nonce \
+    --pem="erc1155/wallets/alice.pem" \
+    --gas-limit=140000000 \
+    --function="setLocalRoles" \
+    --arguments "str:"$NFT_ISSUE_NAME  
+}
 
 
  

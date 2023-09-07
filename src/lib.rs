@@ -26,6 +26,7 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
     ////////////////
     // Issue fungible token
     #[payable("EGLD")]
+    #[only_owner]
     #[endpoint(mintFungibleToken)]
     fn mint_fungible_token(
         &self,
@@ -90,8 +91,9 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
     }
 
     ////////////////
-    // Issue semi fungible token
+    // Issue non fungible token
     #[payable("EGLD")]
+    #[only_owner]
     #[endpoint(issueNonFungibleToken)]
     fn issue_non_fungible_token(
         &self,
@@ -130,6 +132,7 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         match result {
             ManagedAsyncCallResult::Ok(token_identifier) => {
                 self.current_issued_nft().set(token_identifier.clone());
+                self.set_local_roles(&token_identifier.clone());
             }
             ManagedAsyncCallResult::Err(_message) => {
                 // return issue cost to the caller
@@ -144,7 +147,7 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
 
     ////////////////
     // Set minting roles for sc address
-    #[endpoint(setLocalRoles)]
+    #[inline]
     fn set_local_roles(&self, token_identifier: &TokenIdentifier) {
         let sc_address = self.blockchain().get_sc_address();
         let roles = [
@@ -158,9 +161,13 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
             .call_and_exit()
     }
 
-    #[endpoint(createNft)]
+    #[only_owner]
+    #[endpoint(mintNft)]
     fn create_nft_with_attributes(&self) {
         let token_identifier = self.current_issued_nft().get();
+
+        require!(token_identifier.is_valid_esdt_identifier(), "No NFT issued");
+        
         let attributes = ExampleAttributes {
             creation_timestamp: self.blockchain().get_block_timestamp(),
         };
@@ -178,7 +185,7 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
     }
 
     ////////////////
-    // Update storage with new NFT or SFT
+    // Update storage with new Token or NFT 
     #[inline]
     fn update_storage(
         &self,
@@ -199,6 +206,7 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
 
     // DEV ONLY
     // Clear token count if needed
+    #[only_owner]
     #[endpoint(initTokenCount)]
     fn init_token_count(&self) {
         self.token_count().set(1usize);
