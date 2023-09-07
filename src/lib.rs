@@ -1,5 +1,7 @@
 #![no_std]
 
+use storage::TokenIdentifierNonce;
+
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
@@ -14,7 +16,6 @@ pub struct NftAttributes<M: ManagedTypeApi> {
 pub struct ExampleAttributes {
     pub creation_timestamp: u64,
 }
-
 
 /// An empty contract. To be used as a template when starting a new contract from scratch.
 #[multiversx_sc::contract]
@@ -73,13 +74,11 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         match result {
             ManagedAsyncCallResult::Ok(()) => {
                 // need to also mint when issuing, otherwise callback doesn't work
-                self.token_count().update(|id| {
-                    self.address(*id).insert(caller.clone());
-                    self.balance(caller.clone())
-                        .insert(*id, initial_supply.clone());
-                    self.token_name(*id).set(token_identifier.unwrap_esdt());
-                    *id += 1;
-                })
+                let tin = TokenIdentifierNonce {
+                    token: token_identifier.unwrap_esdt(),
+                    nonce: None,
+                };
+                self.update_storage(caller, initial_supply.clone(), tin);
             }
             ManagedAsyncCallResult::Err(_message) => {
                 // return issue cost to the caller
@@ -129,13 +128,9 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         #[call_result] result: ManagedAsyncCallResult<TokenIdentifier>,
     ) {
         match result {
-            ManagedAsyncCallResult::Ok(token_identifier) => self.token_count().update(|id| {
-                self.address(*id).insert(caller.clone());
-                self.balance(caller.clone())
-                    .insert(*id, BigUint::from(1u64));
-                self.token_name(*id).set(token_identifier);
-                *id += 1;
-            }),
+            ManagedAsyncCallResult::Ok(token_identifier) => {
+                self.current_issued_nft().set(token_identifier.clone());
+            }
             ManagedAsyncCallResult::Err(_message) => {
                 // return issue cost to the caller
                 let (token_identifier, returned_tokens) =
@@ -153,7 +148,9 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
     fn set_local_roles(&self, token_identifier: &TokenIdentifier) {
         let sc_address = self.blockchain().get_sc_address();
         let roles = [
+            EsdtLocalRole::NftCreate,
             EsdtLocalRole::NftAddQuantity,
+            EsdtLocalRole::NftBurn,
         ];
         self.send()
             .esdt_system_sc_proxy()
@@ -162,57 +159,42 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
             .call_and_exit()
     }
 
-    ////////////////
-    // Create Nft
     #[endpoint(createNft)]
-    fn create_nft_with_attributes(
-        &self,
-        id: usize,
-        name: ManagedBuffer,
-        uri: ManagedBuffer,
-        attribute: ManagedBuffer,
-    ) {
-        let nft_mapper = self.token_name(id-1);
-
-        let attributes = NftAttributes {
-            attribute1: attribute,
-        };
-
-        let mut serialized_attributes = ManagedBuffer::new();
-        if let core::result::Result::Err(err) = attributes.top_encode(&mut serialized_attributes) {
-            sc_panic!("Attributes encode error: {}", err.message_bytes());
-        }
-
-        let attributes_sha256 = self.crypto().sha256(&serialized_attributes);
-        let attributes_hash = attributes_sha256.as_managed_buffer();
-
-        let uris = ManagedVec::from_single_item(uri);
-
-        self.send().esdt_nft_create(
-            &nft_mapper.get(),    // Token name
-            &BigUint::from(1u64), // Amount to mint
-            &name,                // Nft display name
-            &BigUint::from(0u64), // Royalties
-            attributes_hash,      // Nft Hash
-            &attributes,          // Non formalized attributes
-            &uris,                // uris
-        );
-    }
-
-    #[endpoint(createNft2)]
-    fn create_nft_with_attributes2(&self, id: usize ) {
-        let nft_mapper = self.token_name(id).get() ;
+    fn create_nft_with_attributes(&self) {
+        let token_identifier = self.current_issued_nft().get();
         let attributes = ExampleAttributes {
             creation_timestamp: self.blockchain().get_block_timestamp(),
         };
-        let _ = self.send().esdt_nft_create_compact(
-            &nft_mapper,
+        let nonce = self.send().esdt_nft_create_compact(
+            &token_identifier,
             &BigUint::from(1u64),
             &attributes,
         );
+        let tin = TokenIdentifierNonce {
+            token: token_identifier,
+            nonce: Some(nonce),
+        };
+        let caller = self.blockchain().get_caller();
+        self.update_storage(&caller, BigUint::from(1u64), tin);
     }
 
-        
+    ////////////////
+    // Update storage with new NFT or SFT
+    #[inline]
+    fn update_storage(
+        &self,
+        caller: &ManagedAddress,
+        initial_supply: BigUint,
+        token_identifier: TokenIdentifierNonce<Self::Api>,
+    ) {
+        self.token_count().update(|id| {
+            self.address(*id).insert(caller.clone());
+            self.balance(caller.clone()).insert(*id, initial_supply);
+            self.token_name(*id).set(token_identifier);
+            *id += 1;
+        })
+    }
+
     ////////////////
     // WARNING: DANGER ZONE!
 
@@ -221,19 +203,5 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
     #[endpoint(initTokenCount)]
     fn init_token_count(&self) {
         self.token_count().set(1usize);
-    }
-
-    // DEV ONLY
-    // Manually add to storage with token, id
-    #[endpoint(addToStorage)]
-    fn add_to_storage(&self, token: TokenIdentifier) {
-        let caller = self.blockchain().get_caller();
-        self.token_count().update(|id| {
-            self.address(*id).insert(caller.clone());
-            self.balance(caller.clone())
-                .insert(*id, BigUint::from(100u64));
-            self.token_name(*id).set(token);
-            *id += 1;
-        });
     }
 }

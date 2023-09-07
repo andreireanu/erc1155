@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           11
+// Endpoints:                           10
 // Async Callback:                       1
-// Total number of exported functions:  13
+// Total number of exported functions:  12
 
 #![no_std]
 
@@ -26,13 +26,12 @@ multiversx_sc_wasm_adapter::endpoints! {
         issueNonFungibleToken => issue_non_fungible_token
         setLocalRoles => set_local_roles
         createNft => create_nft_with_attributes
-        createNft2 => create_nft_with_attributes2
         initTokenCount => init_token_count
-        addToStorage => add_to_storage
         getAddress => address
         getBalance => balance
         getTokenName => token_name
         getTokenCount => token_count
+        getCurrentIssuedNft => current_issued_nft
     )
 }
 
