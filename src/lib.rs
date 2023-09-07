@@ -1,15 +1,26 @@
 #![no_std]
 
 multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 mod storage;
+
+#[derive(TypeAbi, TopEncode, TopDecode)]
+pub struct NftAttributes<M: ManagedTypeApi> {
+    pub attribute1: ManagedBuffer<M>,
+}
+
+#[derive(TypeAbi, TopEncode, TopDecode)]
+pub struct ExampleAttributes {
+    pub creation_timestamp: u64,
+}
+
 
 /// An empty contract. To be used as a template when starting a new contract from scratch.
 #[multiversx_sc::contract]
 pub trait Erc1155Contract: crate::storage::StorageModule {
     #[init]
-    fn init(&self) {
-    }
+    fn init(&self) {}
 
     ////////////////
     // Issue fungible token
@@ -44,7 +55,10 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
                 },
             )
             .async_call()
-            .with_callback(self.callbacks().mint_fungible_callback(&caller, &initial_supply))
+            .with_callback(
+                self.callbacks()
+                    .mint_fungible_callback(&caller, &initial_supply),
+            )
             .call_and_exit()
     }
 
@@ -58,6 +72,7 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         let (token_identifier, returned_tokens) = self.call_value().egld_or_single_fungible_esdt();
         match result {
             ManagedAsyncCallResult::Ok(()) => {
+                // need to also mint when issuing, otherwise callback doesn't work
                 self.token_count().update(|id| {
                     self.address(*id).insert(caller.clone());
                     self.balance(caller.clone())
@@ -65,9 +80,66 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
                     self.token_name(*id).set(token_identifier.unwrap_esdt());
                     *id += 1;
                 })
-             },
+            }
             ManagedAsyncCallResult::Err(_message) => {
                 // return issue cost to the caller
+                if token_identifier.is_egld() && returned_tokens > 0 {
+                    self.send().direct_egld(caller, &returned_tokens);
+                }
+            }
+        }
+    }
+
+    ////////////////
+    // Issue semi fungible token
+    #[payable("EGLD")]
+    #[endpoint(issueNonFungibleToken)]
+    fn issue_non_fungible_token(
+        &self,
+        token_display_name: &ManagedBuffer,
+        token_ticker: &ManagedBuffer,
+    ) {
+        let issue_cost = self.call_value().egld_value().clone_value();
+        let caller = self.blockchain().get_caller();
+        self.send()
+            .esdt_system_sc_proxy()
+            .issue_non_fungible(
+                issue_cost,
+                &token_display_name,
+                &token_ticker,
+                NonFungibleTokenProperties {
+                    can_freeze: true,
+                    can_wipe: true,
+                    can_pause: true,
+                    can_transfer_create_role: true,
+                    can_change_owner: true,
+                    can_upgrade: true,
+                    can_add_special_roles: true,
+                },
+            )
+            .async_call()
+            .with_callback(self.callbacks().nft_issue_callback(&caller))
+            .call_and_exit()
+    }
+
+    #[callback]
+    fn nft_issue_callback(
+        &self,
+        caller: &ManagedAddress,
+        #[call_result] result: ManagedAsyncCallResult<TokenIdentifier>,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(token_identifier) => self.token_count().update(|id| {
+                self.address(*id).insert(caller.clone());
+                self.balance(caller.clone())
+                    .insert(*id, BigUint::from(1u64));
+                self.token_name(*id).set(token_identifier);
+                *id += 1;
+            }),
+            ManagedAsyncCallResult::Err(_message) => {
+                // return issue cost to the caller
+                let (token_identifier, returned_tokens) =
+                    self.call_value().egld_or_single_fungible_esdt();
                 if token_identifier.is_egld() && returned_tokens > 0 {
                     self.send().direct_egld(caller, &returned_tokens);
                 }
@@ -81,9 +153,7 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
     fn set_local_roles(&self, token_identifier: &TokenIdentifier) {
         let sc_address = self.blockchain().get_sc_address();
         let roles = [
-            EsdtLocalRole::NftCreate,
             EsdtLocalRole::NftAddQuantity,
-            EsdtLocalRole::NftBurn,
         ];
         self.send()
             .esdt_system_sc_proxy()
@@ -92,6 +162,57 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
             .call_and_exit()
     }
 
+    ////////////////
+    // Create Nft
+    #[endpoint(createNft)]
+    fn create_nft_with_attributes(
+        &self,
+        id: usize,
+        name: ManagedBuffer,
+        uri: ManagedBuffer,
+        attribute: ManagedBuffer,
+    ) {
+        let nft_mapper = self.token_name(id-1);
+
+        let attributes = NftAttributes {
+            attribute1: attribute,
+        };
+
+        let mut serialized_attributes = ManagedBuffer::new();
+        if let core::result::Result::Err(err) = attributes.top_encode(&mut serialized_attributes) {
+            sc_panic!("Attributes encode error: {}", err.message_bytes());
+        }
+
+        let attributes_sha256 = self.crypto().sha256(&serialized_attributes);
+        let attributes_hash = attributes_sha256.as_managed_buffer();
+
+        let uris = ManagedVec::from_single_item(uri);
+
+        self.send().esdt_nft_create(
+            &nft_mapper.get(),    // Token name
+            &BigUint::from(1u64), // Amount to mint
+            &name,                // Nft display name
+            &BigUint::from(0u64), // Royalties
+            attributes_hash,      // Nft Hash
+            &attributes,          // Non formalized attributes
+            &uris,                // uris
+        );
+    }
+
+    #[endpoint(createNft2)]
+    fn create_nft_with_attributes2(&self, id: usize ) {
+        let nft_mapper = self.token_name(id).get() ;
+        let attributes = ExampleAttributes {
+            creation_timestamp: self.blockchain().get_block_timestamp(),
+        };
+        let _ = self.send().esdt_nft_create_compact(
+            &nft_mapper,
+            &BigUint::from(1u64),
+            &attributes,
+        );
+    }
+
+        
     ////////////////
     // WARNING: DANGER ZONE!
 

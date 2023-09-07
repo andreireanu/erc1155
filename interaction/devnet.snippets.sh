@@ -4,7 +4,7 @@ PROXY=https://devnet-gateway.multiversx.com
 CHAIN_ID="D"
 WALLET_ALICE="${PWD}/erc1155/wallets/alice.pem"
 WALLET_BOB="${PWD}/erc1155/wallets/bob.pem"
-CONTRACT_ADDRESS="erd1qqqqqqqqqqqqqpgq0z9jwg83t9v0uw6hjez33q85fyfapdjf7wpqcequja"
+CONTRACT_ADDRESS="erd1qqqqqqqqqqqqqpgq77qjkr6rnqk4mwganal0gejchj0deyz77wpqw3w7vh"
 ALICE_ADDRESS="erd1aqd2v3hsrpgpcscls6a6al35uc3vqjjmskj6vnvl0k93e73x7wpqtpctqw"
 ALICE_ADDRESS_HEX="$(mxpy wallet bech32 --decode ${ALICE_ADDRESS})"
 ALICE_ADDRESS_HEXX="0x$(mxpy wallet bech32 --decode ${ALICE_ADDRESS})"
@@ -44,9 +44,9 @@ upgrade() {
 
 ### ISSUE, MINT, ROLES
 
-TKN_NAME="CallbackToken1"
-TKN_TICKER="CBT1"
-AMOUNT=10
+TKN_NAME="GOLD"
+TKN_TICKER="GOLD"
+AMOUNT=1000
 
 mintFungibleToken() {
     mxpy --verbose contract call ${CONTRACT_ADDRESS} \
@@ -60,7 +60,24 @@ mintFungibleToken() {
     --function="mintFungibleToken" \
     --arguments "str:"$TKN_NAME "str:"$TKN_TICKER $AMOUNT
 } 
+
+NFT_NAME="THORHAMMER"
+NFT_TICKER="THM"
  
+issueNonFungibleToken() {
+    mxpy --verbose contract call ${CONTRACT_ADDRESS} \
+    --send \
+    --value=50000000000000000 \
+    --proxy=${PROXY} \
+    --chain=${CHAIN_ID} \
+    --recall-nonce \
+    --pem="erc1155/wallets/alice.pem" \
+    --gas-limit=140000000 \
+    --function="issueNonFungibleToken" \
+    --arguments "str:"$NFT_NAME "str:"$NFT_TICKER
+}
+
+NFT_ISSUE_NAME=THM-d38042
 
 setLocalRoles() {
     mxpy --verbose contract call ${CONTRACT_ADDRESS} \
@@ -70,13 +87,43 @@ setLocalRoles() {
     --recall-nonce \
     --pem="erc1155/wallets/alice.pem" \
     --gas-limit=140000000 \
-    --function="setLocalRoles"
-    --arguments "str:"$ALICE_ADDRESS  
+    --function="setLocalRoles" \
+    --arguments "str:"$NFT_ISSUE_NAME  
 }
+
+NFT_ID=2
+NFT_NAME="THORHAMMER"
+URI="https://ipfs.io/ipfs/QmTSzERByLKRLA2YGK5sAuFGmNktYkrKcXRr7SsrsqzQG7"
+ATTR="Hammer:Best"
+
+
+createNft() {
+    mxpy --verbose contract call ${CONTRACT_ADDRESS} \
+    --send \
+    --proxy=${PROXY} \
+    --chain=${CHAIN_ID} \
+    --recall-nonce \
+    --pem="erc1155/wallets/alice.pem" \
+    --gas-limit=5500000 \
+    --function="createNft" \
+    --arguments "str:"$NFT_ID "str:"$NFT_NAME "str:"$URI "str:"$ATTR 
+} 
+ 
+createNft2() {
+    mxpy --verbose contract call ${CONTRACT_ADDRESS} \
+    --send \
+    --proxy=${PROXY} \
+    --chain=${CHAIN_ID} \
+    --recall-nonce \
+    --pem="erc1155/wallets/alice.pem" \
+    --gas-limit=5500000 \
+    --function="createNft2" \
+    --arguments $NFT_ID   
+} 
 
 ### GETS
 
-ID=4
+ID=2
 
 getTokenCount() {
     mxpy --verbose contract query ${CONTRACT_ADDRESS} \
