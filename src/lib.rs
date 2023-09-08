@@ -250,6 +250,26 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         self.balance(&caller).insert(id, balance);
     }
 
+    ////////////////
+    // ERC1155 FUNCTIONS
+
+    #[inline]
+    #[view(balanceOf)]
+    fn balance_of(&self, account: ManagedAddress, id: usize) -> BigUint {
+        let address_mapper = self.address(&id);
+        match address_mapper.contains(&account) {
+            true => {
+                self.balance(&account).get(&id).unwrap()
+            },
+            false => BigUint::from(0u64)
+        }
+
+        
+    }
+
+
+
+
  
     ////////////////
     // WARNING: DANGER ZONE!

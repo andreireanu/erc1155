@@ -37,6 +37,11 @@ pub trait StorageModule {
     #[storage_mapper("token_count")]
     fn token_count(&self) -> SingleValueMapper<usize>;
 
+    // Operator mapper
+    #[view(getOperators)]
+    #[storage_mapper("operator")]
+    fn operator(&self, address: &ManagedAddress) -> UnorderedSetMapper<ManagedAddress>;
+
     // Last issued NFT by contract owner mapper
     #[view(getCurrentIssuedNft)]
     #[storage_mapper("current_issued_nft")]

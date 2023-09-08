@@ -7,4 +7,4 @@
 + Any user can:
     + Deposit Tokens to the contract (```depositToken```)
     + Deposit NFTs to the contract (```depositNFTToken```)
-    + Withdraw Tokens and NFTs from the contract (```withdrawToken```)
+    + Withdraw owned Tokens and NFTs from the contract (```withdrawToken```)
