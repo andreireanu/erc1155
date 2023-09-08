@@ -198,23 +198,38 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         })
     }
 
-    ////////////////
-    // Remove from storage if returned
-    #[inline]
-    fn remove_from_storage(
-        &self,
-        caller: &ManagedAddress,
-        supply: BigUint,
-        nonce: u64,
-        token_identifier: TokenIdentifierNonce<Self::Api>,
-    ) {
-        self.token_count().update(|id| {
-            self.address(id).insert(caller.clone());
-            self.balance(caller).insert(*id, supply);
-            self.token_name(id).set(token_identifier);
-            *id += 1;
-        })
+    #[endpoint(depositToken)]
+    #[payable("*")]
+    fn deposit_token(&self, supply: BigUint, nonce: u64, token: TokenIdentifier) {
+        let payment = self.call_value().single_esdt();
+        require!(
+            &payment.amount == &supply,
+            "Incorrect parameters for function call. Payment amount other than deposited one."
+        );
+        require!(
+            &payment.token_nonce == &nonce,
+            "Incorrect parameters for function call. Payment token nonce other than deposited one."
+        );
+        require!(
+            &payment.token_identifier == &token,
+            "Incorrect parameters for function call. Payment token other than deposited one."
+        );
+        let id = self.id(&token);
+        let caller = self.blockchain().get_caller();
+        match id.is_empty() {
+            // Register new Token
+            true => {
+                self.update_storage(&caller, supply, 0u64, &token);
+            }
+            // Update existing Token
+            false => {
+                let mut balance = self.balance(&caller).get(&id.get()).unwrap();
+                balance += supply;
+                self.balance(&caller).insert(id.get(), balance);
+            }
+        }
     }
+
 
     #[endpoint(withdrawToken)]
     fn withdraw_token(&self, supply: BigUint, nonce: u64, token: TokenIdentifier) {
@@ -235,39 +250,17 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
             0 => {
                 let _ = self.send().direct_esdt(&caller, &token, 0, &supply);
                 balance -= supply;
-                self.balance(&caller).insert(id, balance);
+                if balance == 0 {
+                    self.balance(&caller).remove(&id);
+                } else {
+                    self.balance(&caller).insert(id, balance);
+                }
             }
             _ => {}
         }
     }
 
-
-
-    #[endpoint(depositNFTToken)]
-    #[payable("*")]
-    fn deposit_token(&self, supply: BigUint, nonce: u64, token: TokenIdentifier) {
-        let caller = self.blockchain().get_caller();
-        self.update_storage(&caller, supply, nonce, &token);
-    }
-
-    // #[endpoint(withdrawNFTToken)]
-    // fn withdraw_token(&self, id: usize) {
-    //     let caller = self.blockchain().get_caller();
-    //     let token_nonce = self.token_name(id);
-
-    //     require!(!token_nonce.is_empty(), "No NFT found for this id");
-
-    //     let token_nonce_value = token_nonce.get();
-    //     let _ = self.send().direct_esdt(
-    //         &caller,
-    //         &token_nonce_value.token,
-    //         token_nonce_value.nonce,
-    //         &BigUint::from(1u64),
-    //     );
-    // }
-
-
-
+ 
     ////////////////
     // WARNING: DANGER ZONE!
     // THESE CALLS BREAK THE STORAGE LOGIC

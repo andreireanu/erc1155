@@ -26,7 +26,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         issueNonFungibleToken => issue_non_fungible_token
         mintNft => create_nft_with_attributes
         withdrawToken => withdraw_token
-        depositNFTToken => deposit_token
+        depositToken => deposit_token
         initTokenCount => init_token_count
         getAddress => address
         getBalance => balance

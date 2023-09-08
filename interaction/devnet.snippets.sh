@@ -37,7 +37,7 @@ upgrade() {
     --proxy=${PROXY} \
     --recall-nonce \
     --bytecode=erc1155/output/erc1155.wasm \
-    --gas-limit=60000000 \
+    --gas-limit=80000000 \
     --send \
     --metadata-payable
 }
@@ -91,27 +91,16 @@ mintNft() {
     --function="mintNft"
 } 
  
-DEPOSIT_TOKEN=GOLD-ab4bda
+ 
+DEPOSIT_TOKEN=GOLD-ed11cc
+DEPOSIT_SUPPLY=5
+DEPOSIT_NONCE=0
+DEPOSIT_FUNCTION="depositToken"
+DEPOSIT_TOKEN_DUMMY=GOLD-000000
+DEPOSIT_SUPPLY_DUMMY=2
+DEPOSIT_NONCE_DUMMY=100
 
-DEPOSIT_NFT=SML-80797e
-NFT_NONCE=01
-QUANTITY=01
-DEPOSIT_FUNCTION="depositNFTToken"
-
-depositNFTToken() {
-    mxpy --verbose contract call ${ALICE_ADDRESS} \
-    --send \
-    --proxy=${PROXY} \
-    --chain=${CHAIN_ID} \
-    --recall-nonce \
-    --pem="erc1155/wallets/bob.pem" \
-    --gas-limit=100000000 \
-    --function="ESDTNFTTransfer" \
-    --arguments "str:"${DEPOSIT_NFT} ${NFT_NONCE} ${QUANTITY} ${CONTRACT_ADDRESS} "str:"${DEPOSIT_FUNCTION}  ${NFT_NONCE} "str:"${DEPOSIT_NFT}
-} 
-
-
-withdrawNFTToken() {
+depositToken() {
     mxpy --verbose contract call ${CONTRACT_ADDRESS} \
     --send \
     --proxy=${PROXY} \
@@ -119,11 +108,12 @@ withdrawNFTToken() {
     --recall-nonce \
     --pem="erc1155/wallets/bob.pem" \
     --gas-limit=100000000 \
-    --function="withdrawNFTToken" \
-    --arguments ${ID}
+    --function="ESDTTransfer" \
+    --arguments "str:"${DEPOSIT_TOKEN} ${DEPOSIT_SUPPLY} "str:"${DEPOSIT_FUNCTION} ${DEPOSIT_SUPPLY} ${DEPOSIT_NONCE} "str:"${DEPOSIT_TOKEN}
 } 
 
-SUPPLY=20
+ 
+SUPPLY=1
 NONCE=0
 TOKEN=GOLD-ed11cc
 
