@@ -5,4 +5,6 @@
     + Directly mint new tokens in the Smart Contrat (```mintFungibleToken```)
     + Issue NFT Token (```issueNonFungibleToken```) and mint multiple NFTs from the issued collection in the Smart Contract (```mintNft```) 
 + Any user can:
+    + Deposit Tokens to the contract (```depositToken```)
     + Deposit NFTs to the contract (```depositNFTToken```)
+    + Withdraw Tokens and NFTs from the contract (```withdrawToken```)

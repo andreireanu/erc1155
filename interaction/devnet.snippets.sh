@@ -112,26 +112,10 @@ depositToken() {
     --arguments "str:"${DEPOSIT_TOKEN} ${DEPOSIT_SUPPLY} "str:"${DEPOSIT_FUNCTION} ${DEPOSIT_SUPPLY} ${DEPOSIT_NONCE} "str:"${DEPOSIT_TOKEN}
 } 
 
- 
-SUPPLY=1
-NONCE=0
-TOKEN=GOLD-ed11cc
-
-withdrawToken() {
-    mxpy --verbose contract call ${CONTRACT_ADDRESS} \
-    --send \
-    --proxy=${PROXY} \
-    --chain=${CHAIN_ID} \
-    --recall-nonce \
-    --pem="erc1155/wallets/bob.pem" \
-    --gas-limit=100000000 \
-    --function="withdrawToken" \
-    --arguments ${SUPPLY} ${NONCE} "str:"${TOKEN}
-} 
 
 DEPOSIT_NFT=SLM-a81055
-DEPOSIT_NFT_NONCE=01
-DEPOSIT_NFT_SUPPLY=01
+DEPOSIT_NFT_NONCE=1
+DEPOSIT_NFT_SUPPLY=1
 
 depositNFTToken() {
     mxpy --verbose contract call ${ALICE_ADDRESS} \
@@ -142,10 +126,26 @@ depositNFTToken() {
     --pem="erc1155/wallets/alice.pem" \
     --gas-limit=100000000 \
     --function="ESDTNFTTransfer" \
-    --arguments "str:"${DEPOSIT_NFT} ${NFT_NONCE} ${QUANTITY} ${CONTRACT_ADDRESS} "str:"${DEPOSIT_FUNCTION}  ${DEPOSIT_NFT_SUPPLY} ${DEPOSIT_NFT_NONCE} "str:"${DEPOSIT_NFT}
+    --arguments "str:"${DEPOSIT_NFT} ${NFT_NONCE} ${DEPOSIT_NFT_SUPPLY} ${CONTRACT_ADDRESS} "str:"${DEPOSIT_FUNCTION} ${DEPOSIT_NFT_SUPPLY} ${DEPOSIT_NFT_NONCE} "str:"${DEPOSIT_NFT}
 } 
 
- 
+SUPPLY=1
+NONCE=1
+TOKEN=SLM-a81055
+
+withdrawToken() {
+    mxpy --verbose contract call ${CONTRACT_ADDRESS} \
+    --send \
+    --proxy=${PROXY} \
+    --chain=${CHAIN_ID} \
+    --recall-nonce \
+    --pem="erc1155/wallets/alice.pem" \
+    --gas-limit=100000000 \
+    --function="withdrawToken" \
+    --arguments ${SUPPLY} ${NONCE} "str:"${TOKEN}
+}  
+
+
 ### GETS
 
 ID=3
@@ -174,7 +174,7 @@ getBalance() {
     mxpy --verbose contract query ${CONTRACT_ADDRESS} \
     --proxy=${PROXY} \
     --function="getBalance" \
-    --arguments ${BOB_ADDRESS_HEXX} 
+    --arguments ${ALICE_ADDRESS_HEXX} 
 }
  
 getCurrentIssuedNft() {

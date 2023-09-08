@@ -245,19 +245,9 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         let mut balance = self.balance(&caller).get(&id).unwrap();
         require!(balance >= supply, "Token balance lower than requested one");
 
-        // Match on token type
-        match nonce {
-            0 => {
-                let _ = self.send().direct_esdt(&caller, &token, 0, &supply);
-                balance -= supply;
-                if balance == 0 {
-                    self.balance(&caller).remove(&id);
-                } else {
-                    self.balance(&caller).insert(id, balance);
-                }
-            }
-            _ => {}
-        }
+        let _ = self.send().direct_esdt(&caller, &token, nonce, &supply);
+        balance -= supply;
+        self.balance(&caller).insert(id, balance);
     }
 
  
