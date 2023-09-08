@@ -5,7 +5,7 @@ CHAIN_ID="D"
 WALLET_ALICE="${PWD}/erc1155/wallets/alice.pem"
 WALLET_BOB="${PWD}/erc1155/wallets/bob.pem"
 # SC ADDRESS WITH LOCAL MINT:
-CONTRACT_ADDRESS="erd1qqqqqqqqqqqqqpgqmm5gavp332jtadaqzvv0xyk0s7s7hm387wpqg3506p"
+CONTRACT_ADDRESS="erd1qqqqqqqqqqqqqpgqnkgxk3j9427v232kwx9sqmgsr6d8jt76y8dqfyrujn"
 CONTRACT_ADDRESS_HEX="$(mxpy wallet bech32 --decode ${CONTRACT_ADDRESS})"
 ALICE_ADDRESS="erd1aqd2v3hsrpgpcscls6a6al35uc3vqjjmskj6vnvl0k93e73x7wpqtpctqw"
 ALICE_ADDRESS_HEX="$(mxpy wallet bech32 --decode ${ALICE_ADDRESS})"
@@ -23,7 +23,7 @@ deploy() {
  mxpy contract deploy --proxy=${PROXY} \
     --chain=${CHAIN_ID} \
     --bytecode=erc1155/output/erc1155.wasm \
-    --pem="erc1155/wallets/alice.pem" \
+    --pem="erc1155/wallets/bob.pem" \
     --gas-limit=60000000 \
     --recall-nonce \
     --send \
@@ -32,7 +32,7 @@ deploy() {
 
 upgrade() {
  mxpy contract upgrade ${CONTRACT_ADDRESS} \
-    --pem="erc1155/wallets/alice.pem" \
+    --pem="erc1155/wallets/bob.pem" \
     --chain=${CHAIN_ID} \
     --proxy=${PROXY} \
     --recall-nonce \
@@ -46,9 +46,9 @@ upgrade() {
 
 ### ISSUE, MINT, ROLES
 
-TKN_NAME="SILVER"
-TKN_TICKER="SLVR"
-AMOUNT=2000
+TKN_NAME="GOLD"
+TKN_TICKER="GOLD"
+AMOUNT=1000
 
 mintFungibleToken() {
     mxpy --verbose contract call ${CONTRACT_ADDRESS} \
@@ -57,7 +57,7 @@ mintFungibleToken() {
     --proxy=${PROXY} \
     --chain=${CHAIN_ID} \
     --recall-nonce \
-    --pem="erc1155/wallets/alice.pem" \
+    --pem="erc1155/wallets/bob.pem" \
     --gas-limit=140000000 \
     --function="mintFungibleToken" \
     --arguments "str:"$TKN_NAME "str:"$TKN_TICKER $AMOUNT
@@ -73,7 +73,7 @@ issueNonFungibleToken() {
     --proxy=${PROXY} \
     --chain=${CHAIN_ID} \
     --recall-nonce \
-    --pem="erc1155/wallets/alice.pem" \
+    --pem="erc1155/wallets/bob.pem" \
     --gas-limit=140000000 \
     --function="issueNonFungibleToken" \
     --arguments "str:"$NFT_NAME "str:"$NFT_TICKER
@@ -86,7 +86,7 @@ mintNft() {
     --proxy=${PROXY} \
     --chain=${CHAIN_ID} \
     --recall-nonce \
-    --pem="erc1155/wallets/alice.pem" \
+    --pem="erc1155/wallets/bob.pem" \
     --gas-limit=5500000 \
     --function="mintNft"
 } 
@@ -104,23 +104,51 @@ depositNFTToken() {
     --proxy=${PROXY} \
     --chain=${CHAIN_ID} \
     --recall-nonce \
-    --pem="erc1155/wallets/alice.pem" \
+    --pem="erc1155/wallets/bob.pem" \
     --gas-limit=100000000 \
     --function="ESDTNFTTransfer" \
     --arguments "str:"${DEPOSIT_NFT} ${NFT_NONCE} ${QUANTITY} ${CONTRACT_ADDRESS} "str:"${DEPOSIT_FUNCTION}  ${NFT_NONCE} "str:"${DEPOSIT_NFT}
 } 
 
 
+withdrawNFTToken() {
+    mxpy --verbose contract call ${CONTRACT_ADDRESS} \
+    --send \
+    --proxy=${PROXY} \
+    --chain=${CHAIN_ID} \
+    --recall-nonce \
+    --pem="erc1155/wallets/bob.pem" \
+    --gas-limit=100000000 \
+    --function="withdrawNFTToken" \
+    --arguments ${ID}
+} 
+
+SUPPLY=20
+NONCE=0
+TOKEN=GOLD-ed11cc
+
+withdrawToken() {
+    mxpy --verbose contract call ${CONTRACT_ADDRESS} \
+    --send \
+    --proxy=${PROXY} \
+    --chain=${CHAIN_ID} \
+    --recall-nonce \
+    --pem="erc1155/wallets/bob.pem" \
+    --gas-limit=100000000 \
+    --function="withdrawToken" \
+    --arguments ${SUPPLY} ${NONCE} "str:"${TOKEN}
+} 
+
+ 
 ### GETS
 
-ID=5
+ID=1
 
 getTokenCount() {
     mxpy --verbose contract query ${CONTRACT_ADDRESS} \
     --proxy=${PROXY} \
     --function="getTokenCount"  
 }
-
 
 getAddress() {
     mxpy --verbose contract query ${CONTRACT_ADDRESS} \
@@ -140,13 +168,22 @@ getBalance() {
     mxpy --verbose contract query ${CONTRACT_ADDRESS} \
     --proxy=${PROXY} \
     --function="getBalance" \
-    --arguments ${ALICE_ADDRESS_HEXX} 
+    --arguments ${BOB_ADDRESS_HEXX} 
 }
  
 getCurrentIssuedNft() {
     mxpy --verbose contract query ${CONTRACT_ADDRESS} \
     --proxy=${PROXY} \
     --function="getCurrentIssuedNft"
+}
+
+
+
+getId() {
+    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
+    --proxy=${PROXY} \
+    --function="getId" \
+    --arguments "str:"${TOKEN} 
 }
 
 
@@ -158,7 +195,7 @@ initTokenCount() {
     --proxy=${PROXY} \
     --chain=${CHAIN_ID} \
     --recall-nonce \
-    --pem="erc1155/wallets/alice.pem" \
+    --pem="erc1155/wallets/bob.pem" \
     --gas-limit=3000000 \
     --function="initTokenCount"
 }
@@ -171,7 +208,7 @@ addToStorage() {
     --proxy=${PROXY} \
     --chain=${CHAIN_ID} \
     --recall-nonce \
-    --pem="erc1155/wallets/alice.pem" \
+    --pem="erc1155/wallets/bob.pem" \
     --gas-limit=140000000 \
     --function="addToStorage" \
     --arguments "str:"$EXISTING_TOKEN  
@@ -185,7 +222,7 @@ setLocalRoles() {
     --proxy=${PROXY} \
     --chain=${CHAIN_ID} \
     --recall-nonce \
-    --pem="erc1155/wallets/alice.pem" \
+    --pem="erc1155/wallets/bob.pem" \
     --gas-limit=140000000 \
     --function="setLocalRoles" \
     --arguments "str:"$NFT_ISSUE_NAME  

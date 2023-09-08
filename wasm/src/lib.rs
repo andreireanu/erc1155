@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           10
+// Endpoints:                           12
 // Async Callback:                       1
-// Total number of exported functions:  12
+// Total number of exported functions:  14
 
 #![no_std]
 
@@ -25,11 +25,13 @@ multiversx_sc_wasm_adapter::endpoints! {
         mintFungibleToken => mint_fungible_token
         issueNonFungibleToken => issue_non_fungible_token
         mintNft => create_nft_with_attributes
+        withdrawToken => withdraw_token
         depositNFTToken => deposit_token
         initTokenCount => init_token_count
         getAddress => address
         getBalance => balance
         getTokenName => token_name
+        getId => id
         getTokenCount => token_count
         getCurrentIssuedNft => current_issued_nft
     )

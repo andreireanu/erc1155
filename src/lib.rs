@@ -17,7 +17,6 @@ pub struct ExampleAttributes {
     pub creation_timestamp: u64,
 }
 
-/// An empty contract. To be used as a template when starting a new contract from scratch.
 #[multiversx_sc::contract]
 pub trait Erc1155Contract: crate::storage::StorageModule {
     #[init]
@@ -75,11 +74,7 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         match result {
             ManagedAsyncCallResult::Ok(()) => {
                 // need to also mint when issuing, otherwise callback doesn't work
-                let tin = TokenIdentifierNonce {
-                    token: token_identifier.unwrap_esdt(),
-                    nonce: 0,
-                };
-                self.update_storage(caller, initial_supply.clone(), tin);
+                self.update_storage(caller, initial_supply.clone(), 0u64, &token_identifier.unwrap_esdt());
             }
             ManagedAsyncCallResult::Err(_message) => {
                 // return issue cost to the caller
@@ -176,52 +171,108 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
             &BigUint::from(1u64),
             &attributes,
         );
-        let tin = TokenIdentifierNonce {
-            token: token_identifier,
-            nonce,
-        };
         let caller = self.blockchain().get_caller();
-        self.update_storage(&caller, BigUint::from(1u64), tin);
+        self.update_storage(&caller, BigUint::from(1u64), nonce, &token_identifier);
     }
 
     ////////////////
-    // Update storage with new Token or NFT 
+    // Update storage with new Token or NFT
     #[inline]
     fn update_storage(
         &self,
         caller: &ManagedAddress,
-        initial_supply: BigUint,
-        token_identifier: TokenIdentifierNonce<Self::Api>,
+        supply: BigUint,
+        nonce: u64,
+        token: &TokenIdentifier,
     ) {
+        let tin = TokenIdentifierNonce {
+            token: token.clone(),
+            nonce,
+        };
         self.token_count().update(|id| {
-            self.address(*id).insert(caller.clone());
-            self.balance(caller.clone()).insert(*id, initial_supply);
-            self.token_name(*id).set(token_identifier);
+            self.address(id).insert(caller.clone());
+            self.balance(caller).insert(*id, supply);
+            self.token_name(id).set(tin);
+            self.id(token).set(id.clone());
             *id += 1;
         })
     }
 
-    // #[endpoint(depositToken)]
-    // fn deposit_token(&self, token: TokenIdentifier, amount: BigUint) {
-    //     let sc_address = self.blockchain().get_sc_address();
-    //     let nonce = self
-    //         .blockchain()
-    //         .get_current_esdt_nft_nonce(&sc_address, &token);
-    // }
+    ////////////////
+    // Remove from storage if returned
+    #[inline]
+    fn remove_from_storage(
+        &self,
+        caller: &ManagedAddress,
+        supply: BigUint,
+        nonce: u64,
+        token_identifier: TokenIdentifierNonce<Self::Api>,
+    ) {
+        self.token_count().update(|id| {
+            self.address(id).insert(caller.clone());
+            self.balance(caller).insert(*id, supply);
+            self.token_name(id).set(token_identifier);
+            *id += 1;
+        })
+    }
+
+    #[endpoint(withdrawToken)]
+    fn withdraw_token(&self, supply: BigUint, nonce: u64, token: TokenIdentifier) {
+        // Check if withdraw call valid
+        let id = self.id(&token);
+        require!(!id.is_empty(), "Token non existent in Smart Contract");
+        let id = id.get();
+        let caller = self.blockchain().get_caller();
+        require!(
+            self.address(&id).contains(&caller),
+            "Token not registered for caller"
+        );
+        let mut balance = self.balance(&caller).get(&id).unwrap();
+        require!(balance >= supply, "Token balance lower than requested one");
+
+        // Match on token type
+        match nonce {
+            0 => {
+                let _ = self.send().direct_esdt(&caller, &token, 0, &supply);
+                balance -= supply;
+                self.balance(&caller).insert(id, balance);
+            }
+            _ => {}
+        }
+    }
+
+
 
     #[endpoint(depositNFTToken)]
     #[payable("*")]
-    fn deposit_token(&self, nonce: u64, token: TokenIdentifier) {
+    fn deposit_token(&self, supply: BigUint, nonce: u64, token: TokenIdentifier) {
         let caller = self.blockchain().get_caller();
-        let tin = TokenIdentifierNonce { token, nonce };
-        self.update_storage(&caller, BigUint::from(1u64), tin);
+        self.update_storage(&caller, supply, nonce, &token);
     }
+
+    // #[endpoint(withdrawNFTToken)]
+    // fn withdraw_token(&self, id: usize) {
+    //     let caller = self.blockchain().get_caller();
+    //     let token_nonce = self.token_name(id);
+
+    //     require!(!token_nonce.is_empty(), "No NFT found for this id");
+
+    //     let token_nonce_value = token_nonce.get();
+    //     let _ = self.send().direct_esdt(
+    //         &caller,
+    //         &token_nonce_value.token,
+    //         token_nonce_value.nonce,
+    //         &BigUint::from(1u64),
+    //     );
+    // }
+
+
 
     ////////////////
     // WARNING: DANGER ZONE!
+    // THESE CALLS BREAK THE STORAGE LOGIC
 
-    // DEV ONLY
-    // Clear token count if needed
+    // Clear token count if needed (After deploying contract)
     #[only_owner]
     #[endpoint(initTokenCount)]
     fn init_token_count(&self) {

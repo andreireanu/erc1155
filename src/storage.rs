@@ -8,27 +8,36 @@ pub struct TokenIdentifierNonce<M: ManagedTypeApi> {
     pub nonce: u64,
 }
 
-
 // STORAGE
 
 #[multiversx_sc::module]
 pub trait StorageModule {
+    // Id To Address mapper
     #[view(getAddress)]
     #[storage_mapper("address")]
-    fn address(&self, id: usize) -> UnorderedSetMapper<ManagedAddress>;
+    fn address(&self, id: &usize) -> UnorderedSetMapper<ManagedAddress>;
 
+    // Address to Balance mapper
     #[view(getBalance)]
     #[storage_mapper("balance")]
-    fn balance(&self, address: ManagedAddress) -> MapMapper<usize, BigUint>;
+    fn balance(&self, address: &ManagedAddress) -> MapMapper<usize, BigUint>;
 
+    // Id to (Token, Nonce) tuple mapper
     #[view(getTokenName)]
     #[storage_mapper("token_name")]
-    fn token_name(&self, id: usize) -> SingleValueMapper<TokenIdentifierNonce<Self::Api>>;
+    fn token_name(&self, id: &usize) -> SingleValueMapper<TokenIdentifierNonce<Self::Api>>;
 
+    // Token to Id mapper
+    #[view(getId)]
+    #[storage_mapper("id")]
+    fn id(&self, token: &TokenIdentifier) -> SingleValueMapper<usize>;
+
+    // Number of Tokens mapper 
     #[view(getTokenCount)]
     #[storage_mapper("token_count")]
     fn token_count(&self) -> SingleValueMapper<usize>;
 
+    // Last issued NFT by contract owner mapper
     #[view(getCurrentIssuedNft)]
     #[storage_mapper("current_issued_nft")]
     fn current_issued_nft(&self) -> SingleValueMapper<TokenIdentifier>;
