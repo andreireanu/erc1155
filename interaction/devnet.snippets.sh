@@ -145,10 +145,31 @@ withdrawToken() {
     --arguments ${SUPPLY} ${NONCE} "str:"${TOKEN}
 }  
 
+### ERC1155
+
+ID_1=1
+ID_2=2
+ID_3=3
+
+balanceOf() {
+    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
+    --proxy=${PROXY} \
+    --function="balanceOf" \
+    --arguments ${BOB_ADDRESS} ${ID_1}  
+}
+
+balanceOfBatch() {
+    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
+    --proxy=${PROXY} \
+    --function="balanceOfBatch" \
+    --arguments ${BOB_ADDRESS} ${ID_1} 
+}
+ 
+
 
 ### GETS
 
-ID=3
+ID=1
 
 getTokenCount() {
     mxpy --verbose contract query ${CONTRACT_ADDRESS} \
@@ -174,7 +195,7 @@ getBalance() {
     mxpy --verbose contract query ${CONTRACT_ADDRESS} \
     --proxy=${PROXY} \
     --function="getBalance" \
-    --arguments ${ALICE_ADDRESS_HEXX} 
+    --arguments ${BOB_ADDRESS_HEXX} 
 }
  
 getCurrentIssuedNft() {

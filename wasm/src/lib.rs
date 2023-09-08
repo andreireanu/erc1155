@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           14
+// Endpoints:                           15
 // Async Callback:                       1
-// Total number of exported functions:  16
+// Total number of exported functions:  17
 
 #![no_std]
 
@@ -28,6 +28,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         depositToken => deposit_token
         withdrawToken => withdraw_token
         balanceOf => balance_of
+        balanceOfBatch => balance_of_batch
         initTokenCount => init_token_count
         getAddress => address
         getBalance => balance

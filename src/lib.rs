@@ -263,11 +263,20 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
             },
             false => BigUint::from(0u64)
         }
-
-        
     }
 
-
+    #[view(balanceOfBatch)]
+    fn balance_of_batch(
+        &self,
+        batches: MultiValueEncoded<MultiValue2<ManagedAddress, usize>>,
+    ) -> ManagedVec<BigUint> {
+        let mut result_vec = ManagedVec::new();
+        for batch in batches {
+            let (account, id) = batch.into_tuple();
+            result_vec.push(self.balance_of(account, id))
+        }
+        result_vec
+    }
 
 
  
