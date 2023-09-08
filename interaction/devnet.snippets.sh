@@ -129,10 +129,26 @@ withdrawToken() {
     --arguments ${SUPPLY} ${NONCE} "str:"${TOKEN}
 } 
 
+DEPOSIT_NFT=SLM-a81055
+DEPOSIT_NFT_NONCE=01
+DEPOSIT_NFT_SUPPLY=01
+
+depositNFTToken() {
+    mxpy --verbose contract call ${ALICE_ADDRESS} \
+    --send \
+    --proxy=${PROXY} \
+    --chain=${CHAIN_ID} \
+    --recall-nonce \
+    --pem="erc1155/wallets/alice.pem" \
+    --gas-limit=100000000 \
+    --function="ESDTNFTTransfer" \
+    --arguments "str:"${DEPOSIT_NFT} ${NFT_NONCE} ${QUANTITY} ${CONTRACT_ADDRESS} "str:"${DEPOSIT_FUNCTION}  ${DEPOSIT_NFT_SUPPLY} ${DEPOSIT_NFT_NONCE} "str:"${DEPOSIT_NFT}
+} 
+
  
 ### GETS
 
-ID=1
+ID=3
 
 getTokenCount() {
     mxpy --verbose contract query ${CONTRACT_ADDRESS} \
