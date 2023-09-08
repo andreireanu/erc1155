@@ -77,7 +77,7 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
                 // need to also mint when issuing, otherwise callback doesn't work
                 let tin = TokenIdentifierNonce {
                     token: token_identifier.unwrap_esdt(),
-                    nonce: None,
+                    nonce: 0,
                 };
                 self.update_storage(caller, initial_supply.clone(), tin);
             }
@@ -178,7 +178,7 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         );
         let tin = TokenIdentifierNonce {
             token: token_identifier,
-            nonce: Some(nonce),
+            nonce,
         };
         let caller = self.blockchain().get_caller();
         self.update_storage(&caller, BigUint::from(1u64), tin);
@@ -199,6 +199,22 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
             self.token_name(*id).set(token_identifier);
             *id += 1;
         })
+    }
+
+    // #[endpoint(depositToken)]
+    // fn deposit_token(&self, token: TokenIdentifier, amount: BigUint) {
+    //     let sc_address = self.blockchain().get_sc_address();
+    //     let nonce = self
+    //         .blockchain()
+    //         .get_current_esdt_nft_nonce(&sc_address, &token);
+    // }
+
+    #[endpoint(depositNFTToken)]
+    #[payable("*")]
+    fn deposit_token(&self, nonce: u64, token: TokenIdentifier) {
+        let caller = self.blockchain().get_caller();
+        let tin = TokenIdentifierNonce { token, nonce };
+        self.update_storage(&caller, BigUint::from(1u64), tin);
     }
 
     ////////////////

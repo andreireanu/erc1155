@@ -5,7 +5,7 @@ multiversx_sc::derive_imports!();
 #[derive(PartialEq, TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, Clone)]
 pub struct TokenIdentifierNonce<M: ManagedTypeApi> {
     pub token: TokenIdentifier<M>,
-    pub nonce: Option<u64>,
+    pub nonce: u64,
 }
 
 

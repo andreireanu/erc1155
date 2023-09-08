@@ -4,7 +4,9 @@ PROXY=https://devnet-gateway.multiversx.com
 CHAIN_ID="D"
 WALLET_ALICE="${PWD}/erc1155/wallets/alice.pem"
 WALLET_BOB="${PWD}/erc1155/wallets/bob.pem"
+# SC ADDRESS WITH LOCAL MINT:
 CONTRACT_ADDRESS="erd1qqqqqqqqqqqqqpgqmm5gavp332jtadaqzvv0xyk0s7s7hm387wpqg3506p"
+CONTRACT_ADDRESS_HEX="$(mxpy wallet bech32 --decode ${CONTRACT_ADDRESS})"
 ALICE_ADDRESS="erd1aqd2v3hsrpgpcscls6a6al35uc3vqjjmskj6vnvl0k93e73x7wpqtpctqw"
 ALICE_ADDRESS_HEX="$(mxpy wallet bech32 --decode ${ALICE_ADDRESS})"
 ALICE_ADDRESS_HEXX="0x$(mxpy wallet bech32 --decode ${ALICE_ADDRESS})"
@@ -89,17 +91,36 @@ mintNft() {
     --function="mintNft"
 } 
  
- 
+DEPOSIT_TOKEN=GOLD-ab4bda
+
+DEPOSIT_NFT=SML-80797e
+NFT_NONCE=01
+QUANTITY=01
+DEPOSIT_FUNCTION="depositNFTToken"
+
+depositNFTToken() {
+    mxpy --verbose contract call ${ALICE_ADDRESS} \
+    --send \
+    --proxy=${PROXY} \
+    --chain=${CHAIN_ID} \
+    --recall-nonce \
+    --pem="erc1155/wallets/alice.pem" \
+    --gas-limit=100000000 \
+    --function="ESDTNFTTransfer" \
+    --arguments "str:"${DEPOSIT_NFT} ${NFT_NONCE} ${QUANTITY} ${CONTRACT_ADDRESS} "str:"${DEPOSIT_FUNCTION}  ${NFT_NONCE} "str:"${DEPOSIT_NFT}
+} 
+
 
 ### GETS
 
-ID=4
+ID=5
 
 getTokenCount() {
     mxpy --verbose contract query ${CONTRACT_ADDRESS} \
     --proxy=${PROXY} \
     --function="getTokenCount"  
 }
+
 
 getAddress() {
     mxpy --verbose contract query ${CONTRACT_ADDRESS} \
