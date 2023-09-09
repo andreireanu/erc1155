@@ -291,7 +291,43 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
     fn is_approved_for_all(&self, owner: ManagedAddress, operator: ManagedAddress) -> bool {
         self.operator(&owner).contains(&operator)
     }
- 
+
+    #[inline]
+    fn safe_transfer_from(
+        &self,
+        from: &ManagedAddress,
+        to: &ManagedAddress,
+        id: usize,
+        value: BigUint,
+    ) {
+        if &id >= &self.token_count().get() {
+            return;
+        }
+        let balance = self.balance(from).get(&id).unwrap();
+        if value > balance {
+            return;
+        }
+        self.balance(from)
+            .insert(id, balance.clone() - value.clone());
+        self.balance(to).insert(id, balance + value);
+    }
+
+    #[endpoint(safeBatchTransferFrom)]
+    fn safe_batch_transfer_from(
+        &self,
+        from: ManagedAddress,
+        to: ManagedAddress,
+        batches: MultiValueEncoded<MultiValue2<usize, BigUint>>,
+    ) {
+        for batch in batches {
+            let (value, id) = batch.into_tuple();
+            self.safe_transfer_from(&from, &to, value,id );
+        }
+    }
+
+    
+
+
     ////////////////
     // WARNING: DANGER ZONE!
     // THESE CALLS BREAK THE STORAGE LOGIC
