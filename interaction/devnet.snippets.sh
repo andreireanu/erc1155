@@ -46,9 +46,9 @@ upgrade() {
 
 ### ISSUE, MINT, ROLES
 
-TKN_NAME="GOLD"
-TKN_TICKER="GOLD"
-AMOUNT=1000
+TKN_NAME="METAL"
+TKN_TICKER="METAL"
+AMOUNT=10000
 
 mintFungibleToken() {
     mxpy --verbose contract call ${CONTRACT_ADDRESS} \
@@ -150,6 +150,10 @@ withdrawToken() {
 ID_1=1
 ID_2=2
 ID_3=3
+ID_4=4
+ID_5=5
+ID_6=6
+ID_7=7
 
 balanceOf() {
     mxpy --verbose contract query ${CONTRACT_ADDRESS} \
@@ -162,14 +166,55 @@ balanceOfBatch() {
     mxpy --verbose contract query ${CONTRACT_ADDRESS} \
     --proxy=${PROXY} \
     --function="balanceOfBatch" \
-    --arguments ${BOB_ADDRESS} ${ID_1} 
+    --arguments ${BOB_ADDRESS} ${ID_1} ${ALICE_ADDRESS} ${ID_3} 
 }
+
+APPROVAL=1
  
+setApprovalForAll() {
+    mxpy --verbose contract call ${CONTRACT_ADDRESS} \
+    --send \
+    --proxy=${PROXY} \
+    --chain=${CHAIN_ID} \
+    --recall-nonce \
+    --pem="erc1155/wallets/alice.pem" \
+    --gas-limit=10000000 \
+    --function="setApprovalForAll" \
+    --arguments ${BOB_ADDRESS} ${APPROVAL}
+} 
+
+isApprovedForAll() {
+    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
+    --proxy=${PROXY} \
+    --function="isApprovedForAll" \
+    --arguments ${ALICE_ADDRESS} ${BOB_ADDRESS}
+}
+
+TRANSFER_AMOUNT=2000
+
+safeBatchTransferFrom() {
+    mxpy --verbose contract call ${CONTRACT_ADDRESS} \
+    --send \
+    --proxy=${PROXY} \
+    --chain=${CHAIN_ID} \
+    --recall-nonce \
+    --pem="erc1155/wallets/bob.pem" \
+    --gas-limit=10000000 \
+    --function="safeBatchTransferFrom" \
+    --arguments ${BOB_ADDRESS} ${ALICE_ADDRESS} ${ID_7} ${TRANSFER_AMOUNT}
+}
 
 
 ### GETS
 
-ID=1
+balanceOfBatch() {
+    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
+    --proxy=${PROXY} \
+    --function="balanceOfBatch" \
+    --arguments ${BOB_ADDRESS} ${ID_1} ${ALICE_ADDRESS} ${ID_3} 
+}
+
+ID=7
 
 getTokenCount() {
     mxpy --verbose contract query ${CONTRACT_ADDRESS} \
@@ -203,9 +248,7 @@ getCurrentIssuedNft() {
     --proxy=${PROXY} \
     --function="getCurrentIssuedNft"
 }
-
-
-
+ 
 getId() {
     mxpy --verbose contract query ${CONTRACT_ADDRESS} \
     --proxy=${PROXY} \
@@ -213,6 +256,33 @@ getId() {
     --arguments "str:"${TOKEN} 
 }
 
+getAddress_1() {
+    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
+    --proxy=${PROXY} \
+    --function="getAddress" \
+    --arguments $ID_1
+}
+ 
+getAddress_4() {
+    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
+    --proxy=${PROXY} \
+    --function="getAddress" \
+    --arguments $ID_4
+}
+
+getBalanceAlice() {
+    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
+    --proxy=${PROXY} \
+    --function="getBalance" \
+    --arguments ${ALICE_ADDRESS_HEXX} 
+}
+
+getBalanceBob() {
+    mxpy --verbose contract query ${CONTRACT_ADDRESS} \
+    --proxy=${PROXY} \
+    --function="getBalance" \
+    --arguments ${BOB_ADDRESS_HEXX} 
+}
 
 ### DEV CALLS (HANDLE WITH CARE)
  

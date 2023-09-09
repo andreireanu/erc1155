@@ -278,7 +278,7 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         result_vec
     }
 
-    #[view(setApprovalForAll)]
+    #[endpoint(setApprovalForAll)]
     fn set_approval_for_all(&self, operator: ManagedAddress, approved: bool) {
         let caller = self.blockchain().get_caller();
         match approved {
@@ -303,13 +303,27 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         if &id >= &self.token_count().get() {
             return;
         }
-        let balance = self.balance(from).get(&id).unwrap();
-        if value > balance {
+        let mut balance_from = self.balance(from).get(&id).unwrap();
+        if value > balance_from {
             return;
         }
-        self.balance(from)
-            .insert(id, balance.clone() - value.clone());
-        self.balance(to).insert(id, balance + value);
+
+        let balance_to: BigUint;
+        match self.address(&id).contains(to) {
+            true => {
+                balance_to = self.balance(to).get(&id).unwrap() + value.clone();
+            }
+            false => {
+                balance_to = value.clone();
+                self.address(&id).insert(to.clone());
+            }
+        }
+
+        // Update balance
+        balance_from -= value.clone();
+        self.balance(from).insert(id, balance_from);
+        self.balance(to).insert(id, balance_to);
+
     }
 
     #[endpoint(safeBatchTransferFrom)]
