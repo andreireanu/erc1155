@@ -319,13 +319,17 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         to: ManagedAddress,
         batches: MultiValueEncoded<MultiValue2<usize, BigUint>>,
     ) {
+        let caller = self.blockchain().get_caller();
+        require!(
+            caller == from || self.operator(&from).contains(&caller),
+            "Caller not allowed to transfer tokens"
+        );
+
         for batch in batches {
             let (value, id) = batch.into_tuple();
             self.safe_transfer_from(&from, &to, value,id );
         }
     }
-
-    
 
 
     ////////////////
