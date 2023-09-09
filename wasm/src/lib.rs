@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           15
+// Endpoints:                           17
 // Async Callback:                       1
-// Total number of exported functions:  17
+// Total number of exported functions:  19
 
 #![no_std]
 
@@ -29,6 +29,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         withdrawToken => withdraw_token
         balanceOf => balance_of
         balanceOfBatch => balance_of_batch
+        setApprovalForAll => set_approval_for_all
+        isApprovedForAll => is_approved_for_all
         initTokenCount => init_token_count
         getAddress => address
         getBalance => balance

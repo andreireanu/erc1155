@@ -278,7 +278,19 @@ pub trait Erc1155Contract: crate::storage::StorageModule {
         result_vec
     }
 
+    #[view(setApprovalForAll)]
+    fn set_approval_for_all(&self, operator: ManagedAddress, approved: bool) {
+        let caller = self.blockchain().get_caller();
+        match approved {
+            true => self.operator(&caller).insert(operator),
+            false => self.operator(&caller).swap_remove(&operator),
+        };
+    }
 
+    #[view(isApprovedForAll)]
+    fn is_approved_for_all(&self, owner: ManagedAddress, operator: ManagedAddress) -> bool {
+        self.operator(&owner).contains(&operator)
+    }
  
     ////////////////
     // WARNING: DANGER ZONE!
