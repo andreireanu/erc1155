@@ -1,4 +1,5 @@
 ## MultiversX implementation of ERC-1155 standard
+(https://ethereum.org/en/developers/docs/standards/tokens/erc-1155/)
 
 ### Features 
 * #### Smart contract owner can:
